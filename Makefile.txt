@@ -1,0 +1,42 @@
+
+CC  ?= gcc
+CXX ?= g++
+
+# flags
+ARCHFLAGS   ?= -march=native
+OMPFLAGS    ?= -fopenmp
+
+CFLAGS      = -no-pie -g3 -Ofast -Wall -DUSE_FFT -DNDEBUG $(ARCHFLAGS)
+OPTIM_CFLAGS= -no-pie -g3 -Ofast -Wall -DUSE_FFT -DNDEBUG $(ARCHFLAGS)
+
+CXXFLAGS      = -std=gnu++11 $(CFLAGS) $(OMPFLAGS)
+OPTIM_CXXFLAGS= -std=gnu++11 $(OPTIM_CFLAGS) $(OMPFLAGS)
+
+LDFLAGS     = $(OMPFLAGS)
+
+HEADERS=$(wildcard *.h) $(wildcard spqlios/*.h)
+
+OBJS= \
+spqlios/spqlios-fft-fma.o \
+spqlios/spqlios-ifft-fma.o \
+spqlios/spqlios-fft-impl.o \
+spqlios/fft_processor_spqlios.o \
+spqlios/lagrangehalfc_impl_fma.o \
+bigdata.o \
+
+EXE=bigdata
+
+%.o: %.s ${HEADERS}
+        $(CC) -c ${OPTIM_CFLAGS} -o $@ $<
+
+%.o: %.cpp ${HEADERS}
+        $(CXX) -c ${CXXFLAGS} -o $@ $<
+
+%_optim.o: %.cpp ${HEADERS}
+        $(CXX) -c ${OPTIM_CXXFLAGS} -o $@ $<
+
+all: ${OBJS}
+        $(CXX) ${CXXFLAGS} ${OBJS} -o ${EXE} ${LDFLAGS}
+
+clean:
+        rm -f ${OBJS} ${EXE}
